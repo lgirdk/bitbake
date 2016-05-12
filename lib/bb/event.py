@@ -157,7 +157,8 @@ def fire_ui_handlers(event, d):
                 _ui_handlers[h].event.sendpickle((pickle.dumps(event)))
              else:
                 _ui_handlers[h].event.send(event)
-        except:
+        except Exception as e:
+            print(str(e))
             errors.append(h)
     for h in errors:
         del _ui_handlers[h]
