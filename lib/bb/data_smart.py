@@ -551,7 +551,7 @@ class DataSmart(MutableMapping):
         # aka pay the cookie monster
         override = var[var.rfind('_')+1:]
         shortvar = var[:var.rfind('_')]
-        while override and override.islower():
+        while override and (override.islower() or override.isdigit()):
             if shortvar not in self.overridedata:
                 self.overridedata[shortvar] = []
             if [var, override] not in self.overridedata[shortvar]:
@@ -625,7 +625,7 @@ class DataSmart(MutableMapping):
         if '_' in var:
             override = var[var.rfind('_')+1:]
             shortvar = var[:var.rfind('_')]
-            while override and override.islower():
+            while override and (override.islower() or override.isdigit()):
                 try:
                     if shortvar in self.overridedata:
                         # Force CoW by recreating the list first
