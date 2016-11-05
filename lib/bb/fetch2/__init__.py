@@ -1360,22 +1360,34 @@ class FetchMethod(object):
         cmd = None
 
         if unpack:
+            if 'tarsubpath' in urldata.parm:
+                tarsubpath = urldata.parm.get('tarsubpath').lstrip('/').rstrip('/')
+                tarstripcount = tarsubpath.count('/') + 1
+                tarextraopts = '--strip-components=%s %s' % (tarstripcount, tarsubpath)
+                # Since the original directory defined within the tar file is
+                # going to be stripped off, not specifying a new directory to
+                # extract into is probably a bug.
+                if not 'subdir' in urldata.parm:
+                    bb.fatal("URL %s defines 'tarsubpath' but not 'subdir'" % urldata.url)
+            else:
+                tarextraopts = ''
+
             if file.endswith('.tar'):
-                cmd = 'tar x --no-same-owner -f %s' % file
+                cmd = 'tar x --no-same-owner %s -f %s' % (tarextraopts, file)
             elif file.endswith('.tgz') or file.endswith('.tar.gz') or file.endswith('.tar.Z'):
-                cmd = 'tar xz --no-same-owner -f %s' % file
+                cmd = 'tar xz --no-same-owner %s -f %s' % (tarextraopts, file)
             elif file.endswith('.tbz') or file.endswith('.tbz2') or file.endswith('.tar.bz2'):
-                cmd = 'bzip2 -dc %s | tar x --no-same-owner -f -' % file
+                cmd = 'bzip2 -dc %s | tar x --no-same-owner %s -f -' % (file, tarextraopts)
             elif file.endswith('.gz') or file.endswith('.Z') or file.endswith('.z'):
                 cmd = 'gzip -dc %s > %s' % (file, efile)
             elif file.endswith('.bz2'):
                 cmd = 'bzip2 -dc %s > %s' % (file, efile)
             elif file.endswith('.tar.xz'):
-                cmd = 'xz -dc %s | tar x --no-same-owner -f -' % file
+                cmd = 'xz -dc %s | tar x --no-same-owner %s -f -' % (file, tarextraopts)
             elif file.endswith('.xz'):
                 cmd = 'xz -dc %s > %s' % (file, efile)
             elif file.endswith('.tar.lz'):
-                cmd = 'lzip -dc %s | tar x --no-same-owner -f -' % file
+                cmd = 'lzip -dc %s | tar x --no-same-owner %s -f -' % (file, tarextraopts)
             elif file.endswith('.lz'):
                 cmd = 'lzip -dc %s > %s' % (file, efile)
             elif file.endswith('.zip') or file.endswith('.jar'):
@@ -1437,6 +1449,10 @@ class FetchMethod(object):
         if path:
             cmd = "PATH=\"%s\" %s" % (path, cmd)
         bb.note("Unpacking %s to %s/" % (file, os.getcwd()))
+
+        # logger.warn('cmd: %s' % cmd)
+        # logger.warn('unpackdir: %s' % unpackdir)
+
         ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True)
 
         os.chdir(save_cwd)
