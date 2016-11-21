@@ -1362,19 +1362,15 @@ class FetchMethod(object):
         else:
             efile = file
         cmd = None
+        tarsubpath = None
 
         if unpack:
+            tarextraopts = ''
             if 'tarsubpath' in urldata.parm:
                 tarsubpath = urldata.parm.get('tarsubpath').lstrip('/').rstrip('/')
-                tarstripcount = tarsubpath.count('/') + 1
-                tarextraopts = '--strip-components=%s %s' % (tarstripcount, tarsubpath)
-                # Since the original directory defined within the tar file is
-                # going to be stripped off, not specifying a new directory to
-                # extract into is probably a bug.
-                if not 'subdir' in urldata.parm:
-                    bb.fatal("URL %s defines 'tarsubpath' but not 'subdir'" % urldata.url)
-            else:
-                tarextraopts = ''
+                if tarsubpath:
+                    tarstripcount = tarsubpath.count('/') + 1
+                    tarextraopts = '--strip-components=%s %s' % (tarstripcount, tarsubpath)
 
             if file.endswith('.tar'):
                 cmd = 'tar x --no-same-owner %s -f %s' % (tarextraopts, file)
@@ -1426,7 +1422,7 @@ class FetchMethod(object):
                     raise UnpackError("Unable to unpack deb/ipk package - could not list contents", urldata.url)
                 cmd = 'ar x %s %s && tar --no-same-owner -xpf %s && rm %s' % (file, datafile, datafile, datafile)
             elif file.endswith('.tar.7z'):
-                cmd = '7z x -so %s | tar xf - ' % file
+                cmd = '7z x -so %s | tar x --no-same-owner %s -f -' % (file, tarextraopts)
             elif file.endswith('.7z'):
                 cmd = '7za x -y %s 1>/dev/null' % file
 
@@ -1439,6 +1435,10 @@ class FetchMethod(object):
                 unpackdir = subdir
             else:
                 unpackdir = os.path.join(rootdir, subdir)
+            bb.utils.mkdirhier(unpackdir)
+        elif tarsubpath:
+            # For a tar file sub directory, if 'subdir' isn't given then unpack into ${BP}
+            unpackdir = os.path.join(rootdir, data.getVar('BP', True))
             bb.utils.mkdirhier(unpackdir)
         else:
             unpackdir = rootdir
