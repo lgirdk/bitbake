@@ -276,6 +276,22 @@ class Wget(FetchMethod):
             uri = ud.url.split(";")[0]
             r = urllib2.Request(uri)
             r.get_method = lambda: "HEAD"
+
+            def add_basic_auth(login_str, request):
+                '''Adds Basic auth to http request, pass in login:password as string'''
+                import base64
+                encodeuser = base64.b64encode(login_str.encode('utf-8')).decode("utf-8")
+                authheader = "Basic %s" % encodeuser
+                r.add_header("Authorization", authheader)
+
+            try:
+                import netrc, urlparse
+                n = netrc.netrc()
+                login, unused, password = n.authenticators(urlparse.urlparse(uri).hostname)
+                add_basic_auth("%s:%s" % (login, password), r)
+            except (ImportError, IOError, netrc.NetrcParseError):
+                pass
+
             opener.open(r)
         except urllib2.URLError as e:
             # debug for now to avoid spamming the logs in e.g. remote sstate searches
