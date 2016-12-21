@@ -289,7 +289,7 @@ class Wget(FetchMethod):
                 n = netrc.netrc()
                 login, unused, password = n.authenticators(urlparse.urlparse(uri).hostname)
                 add_basic_auth("%s:%s" % (login, password), r)
-            except (ImportError, IOError, netrc.NetrcParseError):
+            except (TypeError, ImportError, IOError, netrc.NetrcParseError):
                 pass
 
             opener.open(r)
