@@ -252,6 +252,10 @@ class BBCooker:
         signal.signal(signal.SIGHUP, self.sigterm_exception)
 
     def config_notifications(self, event):
+        if event.maskname == "IN_Q_OVERFLOW":
+            bb.warn("inotify event queue overflowed, invalidating caches.")
+            self.baseconfig_valid = False
+            return
         if not event.pathname in self.configwatcher.bbwatchedfiles:
             return
         if not event.pathname in self.inotify_modified_files:
@@ -259,6 +263,10 @@ class BBCooker:
         self.baseconfig_valid = False
 
     def notifications(self, event):
+        if event.maskname == "IN_Q_OVERFLOW":
+            bb.warn("inotify event queue overflowed, invalidating caches.")
+            self.parsecache_valid = False
+            return
         if not event.pathname in self.inotify_modified_files:
             self.inotify_modified_files.append(event.pathname)
         self.parsecache_valid = False
@@ -657,6 +665,8 @@ class BBCooker:
         # A task of None means use the default task
         if task is None:
             task = self.configuration.cmd
+        if not task.startswith("do_"):
+            task = "do_%s" % task
 
         fulltargetlist = self.checkPackages(pkgs_to_build, task)
         taskdata = {}
@@ -715,6 +725,9 @@ class BBCooker:
         Create a dependency graph of pkgs_to_build including reverse dependency
         information.
         """
+        if not task.startswith("do_"):
+            task = "do_%s" % task
+
         runlist, taskdata = self.prepareTreeData(pkgs_to_build, task)
         rq = bb.runqueue.RunQueue(self, self.data, self.recipecaches, taskdata, runlist)
         rq.rqdata.prepare()
@@ -818,6 +831,9 @@ class BBCooker:
         """
         Create a dependency tree of pkgs_to_build, returning the data.
         """
+        if not task.startswith("do_"):
+            task = "do_%s" % task
+
         _, taskdata = self.prepareTreeData(pkgs_to_build, task)
 
         seen_fns = []
@@ -1318,6 +1334,8 @@ class BBCooker:
         # If we are told to do the None task then query the default task
         if (task == None):
             task = self.configuration.cmd
+        if not task.startswith("do_"):
+            task = "do_%s" % task
 
         fn, cls, mc = bb.cache.virtualfn2realfn(buildfile)
         fn = self.matchFile(fn)
@@ -1354,8 +1372,6 @@ class BBCooker:
         # Invalidate task for target if force mode active
         if self.configuration.force:
             logger.verbose("Invalidate task %s, %s", task, fn)
-            if not task.startswith("do_"):
-                task = "do_%s" % task
             bb.parse.siggen.invalidate_task(task, self.recipecaches[mc], fn)
 
         # Setup taskdata structure
@@ -1367,8 +1383,6 @@ class BBCooker:
         bb.event.fire(bb.event.BuildStarted(buildname, [item]), self.expanded_data)
 
         # Execute the runqueue
-        if not task.startswith("do_"):
-            task = "do_%s" % task
         runlist = [[mc, item, task, fn]]
 
         rq = bb.runqueue.RunQueue(self, self.data, self.recipecaches, taskdata, runlist)
