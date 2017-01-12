@@ -749,16 +749,22 @@ Lists recipes with the bbappends that apply to them as subitems.
 """
         self.init_bbhandler()
 
-        logger.plain('=== Appended recipes ===')
+        if args.pnspec:
+            logger.plain('=== Matched appended recipes ===')
+        else:
+            logger.plain('=== Appended recipes ===')
 
         pnlist = list(self.bbhandler.cooker_data.pkg_pn.keys())
         pnlist.sort()
         appends = False
         for pn in pnlist:
+            if args.pnspec and pn != args.pnspec:
+                continue
+
             if self.show_appends_for_pn(pn):
                 appends = True
 
-        if self.show_appends_for_skipped():
+        if not args.pnspec and self.show_appends_for_skipped():
             appends = True
 
         if not appends:
@@ -1027,6 +1033,7 @@ def main():
     parser_show_recipes.add_argument('pnspec', nargs='?', help='optional recipe name specification (wildcards allowed, enclose in quotes to avoid shell expansion)')
 
     parser_show_appends = add_command('show-appends', cmds.do_show_appends)
+    parser_show_appends.add_argument('pnspec', nargs='?', help='optional recipe name specification (wildcards allowed, enclose in quotes to avoid shell expansion)')
 
     parser_flatten = add_command('flatten', cmds.do_flatten)
     parser_flatten.add_argument('layer', nargs='*', help='Optional layer(s) to flatten (otherwise all are flattened)')
