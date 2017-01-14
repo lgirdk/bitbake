@@ -757,11 +757,19 @@ Lists recipes with the bbappends that apply to them as subitems.
         pnlist = list(self.bbhandler.cooker_data.pkg_pn.keys())
         pnlist.sort()
         appends = False
+
+        v = None
+        if args.pnspec:
+            if '_' in args.pnspec:
+                p, v = args.pnspec.split('_')
+            else:
+                p = args.pnspec
+
         for pn in pnlist:
-            if args.pnspec and pn != args.pnspec:
+            if args.pnspec and p != pn:
                 continue
 
-            if self.show_appends_for_pn(pn):
+            if self.show_appends_for_pn(pn, v):
                 appends = True
 
         if not args.pnspec and self.show_appends_for_skipped():
@@ -770,8 +778,11 @@ Lists recipes with the bbappends that apply to them as subitems.
         if not appends:
             logger.plain('No append files found')
 
-    def show_appends_for_pn(self, pn):
-        filenames = self.bbhandler.cooker_data.pkg_pn[pn]
+    def show_appends_for_pn(self, pn, pv):
+        if pv:
+            filenames = [f for f in self.bbhandler.cooker_data.pkg_pn[pn] if "_%s.bb" % pv in f]
+        else:
+            filenames = self.bbhandler.cooker_data.pkg_pn[pn]
 
         best = bb.providers.findBestProvider(pn,
                                              self.bbhandler.config_data,
