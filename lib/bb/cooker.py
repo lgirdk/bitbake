@@ -1844,6 +1844,11 @@ class CookerCollectFiles(object):
             # that do not compile
             bbmasks = []
             for mask in bbmask.split():
+                # When constructing an older style single regex, it's possible for BBMASK
+                # to end up beginning with '|', which matches and masks _everything_.
+                if mask.startswith("|"):
+                    collectlog.warn("BBMASK contains regular expression beginning with '|', fixing: %s" % mask)
+                    mask = mask[1:]
                 try:
                     re.compile(mask)
                     bbmasks.append(mask)
