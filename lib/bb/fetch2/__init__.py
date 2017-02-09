@@ -35,6 +35,7 @@ import operator
 import collections
 import subprocess
 import pickle
+import errno
 import bb.persist_data, bb.utils
 import bb.checksum
 from bb import data
@@ -997,6 +998,12 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
     except bb.fetch2.NetworkAccess:
         raise
 
+    except IOError as e:
+        if e.errno in [os.errno.ESTALE]:
+            logger.warn("Stale Error Observed %s." % ud.url)
+            return False
+        raise
+
     except bb.fetch2.BBFetchException as e:
         if isinstance(e, ChecksumError):
             logger.warning("Mirror checksum failure for url %s (original url: %s)\nCleaning and trying again." % (ud.url, origud.url))
@@ -1644,6 +1651,11 @@ class Fetch(object):
                     raise FetchError("Unable to fetch URL from any source.", u)
 
                 update_stamp(ud, self.d)
+
+            except IOError as e:
+                if e.errno in [os.errno.ESTALE]:
+                    logger.error("Stale Error Observed %s." % u)
+                    raise ChecksumError("Stale Error Detected")
 
             except BBFetchException as e:
                 if isinstance(e, ChecksumError):
