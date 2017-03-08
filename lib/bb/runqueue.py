@@ -675,6 +675,20 @@ class RunQueueData:
 
         maps = []
         delcount = 0
+
+        if self.cooker.configuration.runall is not None:
+            runall = "do_%s" % self.cooker.configuration.runall
+
+            # re-run the mark_active and then drop unused tasks from new list
+            runq_build_prev = runq_build
+            runq_build = [0] * len(self.runq_fnid)
+            for listid in xrange(len(self.runq_fnid)):
+                if self.runq_task[listid] == runall and runq_build_prev[listid] == 1:
+                    mark_active(listid,1)
+
+            if len([i for i, e in enumerate(runq_build) if e != 0]) == 0:
+                bb.msg.fatal("RunQueue", "No remaining tasks to run for build target %s with runall %s" % (target, runall))
+
         for listid in xrange(len(self.runq_fnid)):
             if runq_build[listid-delcount] == 1:
                 maps.append(listid-delcount)
