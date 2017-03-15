@@ -1511,7 +1511,7 @@ class FetchMethod(object):
         return "%s-%s" % (key, d.getVar("PN", True) or "")
 
 class Fetch(object):
-    def __init__(self, urls, d, cache = True, localonly = False, connection_cache = None):
+    def __init__(self, urls, d, cache = True, localonly = False, connection_cache = None, ignore_err = False):
         if localonly and cache:
             raise Exception("bb.fetch2.Fetch.__init__: cannot set cache and localonly at same time")
 
