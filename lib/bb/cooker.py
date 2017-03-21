@@ -655,7 +655,7 @@ class BBCooker:
 
         # emit the metadata which isnt valid shell
         data.expandKeys(envdata)
-        for e in envdata.keys():
+        for e in sorted(envdata.keys()):
             if data.getVarFlag( e, 'python', envdata ):
                 logger.plain("\npython %s () {\n%s}\n", e, envdata.getVar(e, False))
 
