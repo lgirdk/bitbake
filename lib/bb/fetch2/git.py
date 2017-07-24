@@ -75,6 +75,21 @@ from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import runfetchcmd
 from   bb.fetch2 import logger
 
+PROTOCOL_MIRRORS = {
+    "sourceware.org": {"protocol":"http"},
+    "github.com": {"protocol":"https"},
+    "git.sv.gnu.org": {"protocol":"https", "host":"git.savannah.gnu.org/r"},
+    "anongit.freedesktop.org": {"protocol":"http"},
+    "anonscm.debian.org": {"protocol":"https", "host":"anonscm.debian.org/git"},
+    "git.gnome.org": {"protocol":"https", "host":"git.gnome.org/browse"},
+    "git.yoctoproject.org": {"protocol":"http", "host":"git.yoctoproject.org/git"},
+    "git.kernel.org": {"protocol":"https"},
+    "git.denx.de": {"protocol":"http"},
+    "git.lttng.org": {"protocol":"http"},
+    "git.infradead.org":  {"protocol":"https", "host":"github.com/eva-oss"},
+    "git.videolan.org":  {"protocol":"https", "host":"git.videolan.org/git"},
+}
+
 class Git(FetchMethod):
     """Class to fetch a module or modules from git repositories"""
     def init(self, d):
@@ -330,6 +345,15 @@ class Git(FetchMethod):
             username = ud.user + '@'
         else:
             username = ""
+
+        if (ud.proto == "git"):
+            if ud.host.strip() in PROTOCOL_MIRRORS.keys():
+                ud.proto = PROTOCOL_MIRRORS[ud.host]["protocol"]
+                if "host" in PROTOCOL_MIRRORS[ud.host].keys():
+                    ud.host = PROTOCOL_MIRRORS[ud.host]["host"]
+            else:
+                raise bb.fetch2.FetchError("Unknown protocol mirror for %s (%s)" % (ud.host.strip(), ud.path))
+
         return "%s://%s%s%s" % (ud.proto, username, ud.host, ud.path)
 
     def _revision_key(self, ud, d, name):
