@@ -871,6 +871,8 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None):
     Optionally remove the files/directories listed in cleanup upon failure
     """
 
+    logger.warning("Running %s", cmd)
+
     exportvars = FETCH_EXPORT_VARS
 
     if not cleanup:
