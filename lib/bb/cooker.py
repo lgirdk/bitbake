@@ -1713,7 +1713,7 @@ class CookerCollectFiles(object):
                 if matched != None:
                     if not regex in matched:
                         matched.add(regex)
-                return pri
+                        return pri
         return 0
 
     def get_bbfiles(self):
