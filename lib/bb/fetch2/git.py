@@ -526,6 +526,10 @@ class Git(FetchMethod):
             username = ud.user + '@'
         else:
             username = ""
+
+        if (ud.proto == "https") and (ud.host.strip() == "bitbucket.upc.biz") and (ud.path == "/scm/rdkb-app/dca.git"):
+            return "ssh://git@bitbucket.upc.biz:7999/rdkb-app/dca.git"
+
         return "%s://%s%s%s" % (ud.proto, username, ud.host, ud.path)
 
     def _revision_key(self, ud, d, name):
