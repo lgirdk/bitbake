@@ -165,7 +165,11 @@ def expandKeys(alterdata, readdata = None):
         if newval is not None:
             val = alterdata.getVar(key, False)
             if val is not None:
-                bb.warn("Variable key %s (%s) replaces original key %s (%s)." % (key, val, ekey, newval))
+                # OE 2.5 renamed RDEPENDS_kernel-base -> RDEPENDS_${KERNEL_PACKAGE_NAME}-base
+                # which makes this warning hard to avoid for distros etc which want to over-ride
+                # the default value and be compatible with all versions of OE, so we cheat!
+                if ekey != 'RDEPENDS_kernel-base':
+                    bb.warn("Variable key %s (%s) replaces original key %s (%s)." % (key, val, ekey, newval))
         alterdata.renameVar(key, ekey)
 
 def inheritFromOS(d, savedenv, permitted):
